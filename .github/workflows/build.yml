@@ -9,6 +9,8 @@ jobs:
     steps:
       - name: Checkout device tree
         uses: actions/checkout@v4
+        with:
+          path: device-tree
 
       - name: Free disk space
         run: |
@@ -40,6 +42,8 @@ jobs:
 
       - name: Sync TWRP source
         run: |
+          mkdir -p twrp
+          cd twrp
           git config --global user.email "twrp@local"
           git config --global user.name "TWRP Build"
           repo init --depth=1 \
@@ -49,24 +53,13 @@ jobs:
 
       - name: Install device tree
         run: |
-          mkdir -p device/youxuepai/yxp_713_pad
-          cp -r \
-            BoardConfig.mk \
-            twrp_yxp_713_pad.mk \
-            AndroidProducts.mk \
-            Android.mk \
-            Android.bp \
-            device.mk \
-            recovery.fstab \
-            vendorsetup.sh \
-            extract-files.sh \
-            setup-makefiles.sh \
-            README.md \
-            prebuilt \
-            recovery \
-            device/youxuepai/yxp_713_pad/
+          mkdir -p twrp/device/youxuepai
+          cp -r device-tree twrp/device/youxuepai/yxp_713_pad
+          rm -rf twrp/device/youxuepai/yxp_713_pad/.git
+          rm -rf twrp/device/youxuepai/yxp_713_pad/.github
 
       - name: Build recoveryimage
+        working-directory: twrp
         run: |
           export ALLOW_MISSING_DEPENDENCIES=true
           export LC_ALL=C
@@ -78,5 +71,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: twrp-recovery-yxp_713_pad
-          path: out/target/product/yxp_713_pad/recovery.img
+          path: twrp/out/target/product/yxp_713_pad/recovery.img
           if-no-files-found: error
