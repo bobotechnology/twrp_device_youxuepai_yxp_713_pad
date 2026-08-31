@@ -1,0 +1,82 @@
+name: Build TWRP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout device tree
+        uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+          df -h
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            git gnupg flex bison build-essential zip curl zlib1g-dev \
+            gcc-multilib g++-multilib libc6-dev-i386 lib32ncurses-dev \
+            x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev \
+            libxml2-utils xsltproc unzip fontconfig openjdk-11-jdk \
+            python3 python-is-python3 rsync cpio bc lz4 file
+
+      - name: Install repo tool
+        run: |
+          sudo curl -fsSL -o /usr/local/bin/repo \
+            https://storage.googleapis.com/git-repo-downloads/repo
+          sudo chmod a+x /usr/local/bin/repo
+
+      - name: Sync TWRP source
+        run: |
+          git config --global user.email "twrp@local"
+          git config --global user.name "TWRP Build"
+          repo init --depth=1 \
+            -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git \
+            -b twrp-12.1
+          repo sync -c --no-tags -j$(nproc)
+
+      - name: Install device tree
+        run: |
+          mkdir -p device/youxuepai/yxp_713_pad
+          cp -r \
+            BoardConfig.mk \
+            twrp_yxp_713_pad.mk \
+            AndroidProducts.mk \
+            Android.mk \
+            Android.bp \
+            device.mk \
+            recovery.fstab \
+            vendorsetup.sh \
+            extract-files.sh \
+            setup-makefiles.sh \
+            README.md \
+            prebuilt \
+            recovery \
+            device/youxuepai/yxp_713_pad/
+
+      - name: Build recoveryimage
+        run: |
+          export ALLOW_MISSING_DEPENDENCIES=true
+          export LC_ALL=C
+          . build/envsetup.sh
+          lunch twrp_yxp_713_pad-eng
+          mka recoveryimage -j$(nproc)
+
+      - name: Upload recovery.img
+        uses: actions/upload-artifact@v4
+        with:
+          name: twrp-recovery-yxp_713_pad
+          path: out/target/product/yxp_713_pad/recovery.img
+          if-no-files-found: error
