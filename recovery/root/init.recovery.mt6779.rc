@@ -1,6 +1,13 @@
 on init
     setprop sys.usb.configfs 1
     setprop sys.usb.ffs.aio_compat 1
+    setprop sys.usb.controller musb-hdrc
+    setprop persist.sys.usb.config adb
+    setprop sys.usb.config adb
+
+on boot
+    setprop sys.usb.config adb
+    start adbd
 
 on fs && property:ro.debuggable=0
     # distinguish USB shoulde connect or not, i.e. CDP vs SDP
