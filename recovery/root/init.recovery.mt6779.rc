@@ -15,7 +15,7 @@ on fs && property:ro.debuggable=0
     start adbd
 
 on post-fs
-    # Support A/B feature for emmc boot region
+    # Support A/B feature for eMMC boot region
     symlink /dev/block/sda /dev/block/mmcblk0boot0
     symlink /dev/block/sdb /dev/block/mmcblk0boot1
     symlink /dev/block/mmcblk0boot0 /dev/block/platform/bootdevice/by-name/preloader_a
@@ -27,6 +27,15 @@ on post-fs
     symlink /dev/block/platform/bootdevice/by-name/preloader_a /dev/block/platform/bootdevice/by-name/preloader_ufs_a
     symlink /dev/block/platform/bootdevice/by-name/preloader_b /dev/block/platform/bootdevice/by-name/preloader_ufs_b
     mount ext4 /dev/block/by-name/cache /cache noatime nosuid nodev nomblk_io_submit barrier=1
+    mkdir /cache/recovery 0770 root root
+    start twrp_input_debug
+
+service twrp_input_debug /system/bin/sh /system/bin/twrp-input-debug.sh
+    class core
+    user root
+    group root input log
+    disabled
+    seclabel u:r:su:s0
 
 service console /system/bin/sh
     class core
