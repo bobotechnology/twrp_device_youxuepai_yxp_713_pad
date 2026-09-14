@@ -1,18 +1,18 @@
+# TWRP's imported init.recovery.usb.rc configures the legacy android_usb
+# gadget. Keep configfs disabled so both USB backends do not handle the same
+# sys.usb.config=adb transition at once.
 on init
-    setprop sys.usb.configfs 1
+    setprop sys.usb.configfs 0
     setprop sys.usb.ffs.aio_compat 1
-    setprop sys.usb.controller musb-hdrc
+    setprop service.adb.root 1
 
 on boot
-    setprop service.adb.root 1
     setprop sys.usb.config adb
-    start adbd
 
 on fs && property:ro.debuggable=0
     # distinguish USB shoulde connect or not, i.e. CDP vs SDP
     write /sys/class/udc/musb-hdrc/device/cmode 2
-    # set charging free due to it wait for USB activation
-    start adbd
+    # The sys.usb.config=adb trigger starts adbd after the legacy gadget is ready.
 
 on post-fs
     # Support A/B feature for eMMC boot region
