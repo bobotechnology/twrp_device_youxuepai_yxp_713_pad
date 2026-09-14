@@ -65,7 +65,7 @@ jobs:
       artifact_name: ${{ steps.artifact.outputs.name }}
     steps:
       - name: Checkout device tree
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: device-tree
           fetch-depth: 1
