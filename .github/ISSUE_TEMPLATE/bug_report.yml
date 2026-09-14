@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this form only for the Youxuepai P713 / yxp_713_pad.
+        Use this form only for the Youxuepai U90 / yxp_713_pad.
         Remove serial numbers, personal data, encryption keys, and private paths from logs.
   - type: input
     id: build
@@ -60,7 +60,7 @@ body:
     attributes:
       label: Checklist
       options:
-        - label: I confirmed that this is a P713 / yxp_713_pad build.
+        - label: I confirmed that this is a U90 / yxp_713_pad build.
           required: true
         - label: I removed sensitive data from logs and screenshots.
           required: true

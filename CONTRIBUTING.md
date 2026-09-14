@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve TWRP support for the Youxuepai P713.
+Thanks for helping improve TWRP support for the Youxuepai U90.
 
 ## Before opening an issue
 

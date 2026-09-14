@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest a scoped improvement for the P713 Recovery device tree.
+description: Suggest a scoped improvement for the U90 Recovery device tree.
 title: "[Feature]: "
 body:
   - type: markdown
@@ -10,7 +10,7 @@ body:
     id: problem
     attributes:
       label: Problem to solve
-      description: What P713 Recovery limitation does this address?
+      description: What U90 Recovery limitation does this address?
     validations:
       required: true
   - type: textarea

@@ -14,7 +14,7 @@ branch and product configuration.
 ## Local build
 
 ~~~sh
-mkdir -p twrp-p713 && cd twrp-p713
+mkdir -p twrp-u90 && cd twrp-u90
 repo init --depth=1 \
   -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git \
   -b twrp-12.1

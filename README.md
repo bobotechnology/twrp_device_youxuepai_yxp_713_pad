@@ -1,13 +1,13 @@
-# TWRP Device Tree for Youxuepai P713
+# TWRP Device Tree for Youxuepai U90
 
 [![Build TWRP](https://github.com/bobotechnology/twrp_device_youxuepai_yxp_713_pad/actions/workflows/build.yml/badge.svg)](https://github.com/bobotechnology/twrp_device_youxuepai_yxp_713_pad/actions/workflows/build.yml)
-[![Device](https://img.shields.io/badge/device-Youxuepai%20P713-1f6feb)](https://github.com/bobotechnology/twrp_device_youxuepai_yxp_713_pad)
+[![Device](https://img.shields.io/badge/device-Youxuepai%20U90-1f6feb)](https://github.com/bobotechnology/twrp_device_youxuepai_yxp_713_pad)
 [![Platform](https://img.shields.io/badge/platform-MediaTek%20MT6779-6f42c1)](https://github.com/bobotechnology/twrp_device_youxuepai_yxp_713_pad)
 
-An unofficial TWRP 12.1 device tree for the **Youxuepai P713** tablet
+An unofficial TWRP 12.1 device tree for the **Youxuepai U90** tablet
 (codename: **yxp_713_pad**, platform: **MediaTek MT6779**).
 
-中文简介：这是优学派 P713 的 TWRP 设备树。Recovery 的显示、Himax 触摸和 USB ADB
+中文简介：这是优学派 U90 的 TWRP 设备树。Recovery 的显示、Himax 触摸和 USB ADB
 已经在真机 Recovery 环境中验证；请先阅读刷写说明，再对自己的设备负责。
 
 > [!WARNING]
@@ -20,7 +20,7 @@ An unofficial TWRP 12.1 device tree for the **Youxuepai P713** tablet
 
 | Property | Value |
 | --- | --- |
-| Device | Youxuepai P713 |
+| Device | Youxuepai U90 |
 | Codename | yxp_713_pad |
 | SoC | MediaTek MT6779 |
 | Architecture | arm64 / arm64-v8a |
@@ -56,9 +56,14 @@ Hardware verification below was completed on **September 14, 2026** using this d
 
 ## Downloads
 
-Build artifacts are uploaded by GitHub Actions. Open the latest successful
-[Build TWRP workflow run](https://github.com/bobotechnology/twrp_device_youxuepai_yxp_713_pad/actions/workflows/build.yml), then download the
-recovery artifact from that run.
+For ordinary installs, prefer the latest published
+[GitHub Release](https://github.com/bobotechnology/twrp_device_youxuepai_yxp_713_pad/releases).
+A release contains the device-specific `twrp-u90-recovery.img` asset and its
+SHA-256 checksum.
+
+GitHub Actions artifacts remain useful for CI and test builds. Open the latest
+successful [Build TWRP workflow run](https://github.com/bobotechnology/twrp_device_youxuepai_yxp_713_pad/actions/workflows/build.yml)
+when a test artifact is needed; these artifacts are retained for 14 days.
 
 Before flashing, verify the artifact origin and checksum yourself. Never flash
 an image copied from an untrusted mirror.
@@ -71,6 +76,7 @@ an image copied from an untrusted mirror.
 - [Contributing](CONTRIBUTING.md)
 - [Changelog](CHANGELOG.md)
 - [Security policy](SECURITY.md)
+- [Release process](docs/RELEASING.md)
 
 ## Kernel provenance and patch policy
 
@@ -81,7 +87,7 @@ kernel with a tightly scoped patch script in tools.
 The patch tool refuses an unexpected stock input hash, verifies every source
 instruction before replacing it, checks the exact modified byte footprint, and
 preserves the FDT tail. Do not replace these artifacts with blobs from another
-P713 revision or another MT6779 device without re-validating the entire boot
+U90 revision or another MT6779 device without re-validating the entire boot
 and input path.
 
 ## Support and contributions

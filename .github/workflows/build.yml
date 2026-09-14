@@ -1,10 +1,16 @@
 name: Build TWRP
 
 on:
+  workflow_call:
+    outputs:
+      artifact_name:
+        description: Name of the uploaded Recovery artifact.
+        value: ${{ jobs.build.outputs.artifact_name }}
   push:
     branches: [main]
     paths:
       - .github/workflows/build.yml
+      - .github/workflows/release.yml
       - Android.bp
       - Android.mk
       - AndroidProducts.mk
@@ -21,6 +27,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/build.yml
+      - .github/workflows/release.yml
       - Android.bp
       - Android.mk
       - AndroidProducts.mk
@@ -54,7 +61,8 @@ jobs:
     name: Build Recovery
     runs-on: ubuntu-22.04
     timeout-minutes: 120
-
+    outputs:
+      artifact_name: ${{ steps.artifact.outputs.name }}
     steps:
       - name: Checkout device tree
         uses: actions/checkout@v4
@@ -152,14 +160,21 @@ jobs:
           test -s "$image"
           size="$(stat -c%s "$image")"
           test "$size" -le 33554432
-          sha256sum "$image" > "$image.sha256"
+          (
+            cd "$(dirname "$image")"
+            sha256sum recovery.img > recovery.img.sha256
+          )
           file "$image"
           cat "$image.sha256"
+
+      - name: Record artifact name
+        id: artifact
+        run: echo "name=twrp-recovery-${DEVICE}-${GITHUB_RUN_ID}" >> "$GITHUB_OUTPUT"
 
       - name: Upload recovery image
         uses: actions/upload-artifact@v4
         with:
-          name: twrp-recovery-${{ env.DEVICE }}-${{ github.run_number }}
+          name: ${{ steps.artifact.outputs.name }}
           path: |
             twrp/out/target/product/yxp_713_pad/recovery.img
             twrp/out/target/product/yxp_713_pad/recovery.img.sha256

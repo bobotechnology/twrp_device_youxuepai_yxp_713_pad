@@ -1,0 +1,128 @@
+name: Publish TWRP Release
+
+on:
+  push:
+    tags:
+      - "u90-twrp-*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "New or existing tag to publish (must start with u90-twrp-)."
+        required: true
+        type: string
+      title:
+        description: "Optional release title."
+        required: false
+        default: "TWRP for Youxuepai U90"
+        type: string
+      prerelease:
+        description: "Mark this release as a prerelease."
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build release image
+    uses: ./.github/workflows/build.yml
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download verified Recovery artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.artifact_name }}
+          path: release
+
+      - name: Verify and package release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          (
+            cd release
+            sha256sum -c recovery.img.sha256
+            mv recovery.img twrp-u90-recovery.img
+            sha256sum twrp-u90-recovery.img > twrp-u90-recovery.img.sha256
+          )
+
+          cat > release/RELEASE_NOTES.md <<'EOF'
+          ## Device
+
+          - **Youxuepai U90** (`yxp_713_pad`, MediaTek MT6779)
+          - TWRP 12.1 Recovery image
+
+          ## Assets
+
+          - `twrp-u90-recovery.img`
+          - `twrp-u90-recovery.img.sha256`
+
+          Verify the download before flashing:
+
+          ```sh
+          sha256sum -c twrp-u90-recovery.img.sha256
+          ```
+
+          > [!WARNING]
+          > This release is only for the Youxuepai U90. Keep a matching stock
+          > Recovery image for rollback and follow the repository flashing guide.
+          EOF
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_TITLE: ${{ inputs.title }}
+          INPUT_PRERELEASE: ${{ inputs.prerelease }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="$GITHUB_REF_NAME"
+          title="$INPUT_TITLE"
+          prerelease=()
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            tag="$INPUT_TAG"
+            if [[ "$INPUT_PRERELEASE" == "true" ]]; then
+              prerelease+=(--prerelease)
+            fi
+          fi
+
+          case "$tag" in
+            u90-twrp-?*) ;;
+            *)
+              echo "Refusing unsafe release tag: $tag" >&2
+              exit 1
+              ;;
+          esac
+
+          if [[ -z "$title" ]]; then
+            title="TWRP for Youxuepai U90"
+          fi
+
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$tag" \
+              release/twrp-u90-recovery.img \
+              release/twrp-u90-recovery.img.sha256 \
+              --clobber \
+              --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$tag" \
+              release/twrp-u90-recovery.img \
+              release/twrp-u90-recovery.img.sha256 \
+              --title "$title" \
+              --target "$GITHUB_SHA" \
+              --generate-notes \
+              --notes-file release/RELEASE_NOTES.md \
+              "${prerelease[@]}" \
+              --repo "$GITHUB_REPOSITORY"
+          fi

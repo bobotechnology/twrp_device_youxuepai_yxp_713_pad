@@ -3,7 +3,7 @@
 ## Read this first
 
 - Use an unlocked device and a flashing workflow already known to work for
-  your P713.
+  your Youxuepai U90.
 - Keep a matching stock Recovery image available for rollback.
 - Verify the image came from this repository's workflow or from your own
   reproducible local build.
@@ -11,13 +11,17 @@
 
 ## Fastboot example
 
-If Fastboot is already your known-good flashing path, a typical sequence is:
+If Fastboot is already your known-good flashing path, a typical sequence for a
+published release is:
 
 ~~~sh
 adb reboot bootloader
-fastboot flash recovery recovery.img
+fastboot flash recovery twrp-u90-recovery.img
 fastboot reboot recovery
 ~~~
+
+For a local build, replace `twrp-u90-recovery.img` with the generated
+`recovery.img` file.
 
 If your device uses another service tool or partition workflow, flash only the
 Recovery image through that established path. Do not substitute boot, vbmeta,

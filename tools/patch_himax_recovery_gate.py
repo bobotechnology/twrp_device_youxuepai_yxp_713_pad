@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Create a recovery kernel that permits the active Himax driver in recovery.
 
-The original P713 MT6779 kernel is a gzip-compressed ARM64 Image followed by
+The original U90 MT6779 kernel is a gzip-compressed ARM64 Image followed by
 an FDT payload. This utility preserves that FDT tail exactly and changes only
 three ARM64 instructions: the two boot-mode branches which reject recovery in
 HXTP ``tpd_driver_init``, plus the early boot-animation-completion return in

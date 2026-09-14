@@ -16,5 +16,5 @@ Otherwise, contact [@Dylan-rev](https://github.com/Dylan-rev) through GitHub wit
 minimal proof of concept, the affected commit, and safe reproduction steps.
 
 This is a volunteer device-tree project; there is no guaranteed response or
-release timeline. Reports that can reproduce on the Youxuepai P713
+release timeline. Reports that can reproduce on the Youxuepai U90
 (`yxp_713_pad`) and identify the affected Recovery path are easiest to assess.

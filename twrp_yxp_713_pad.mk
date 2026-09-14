@@ -18,7 +18,7 @@ $(call inherit-product, device/youxuepai/yxp_713_pad/device.mk)
 PRODUCT_DEVICE := yxp_713_pad
 PRODUCT_NAME := twrp_yxp_713_pad
 PRODUCT_BRAND := YOUXUEPAI
-PRODUCT_MODEL := P713
+PRODUCT_MODEL := U90
 PRODUCT_MANUFACTURER := youxuepai
 
 PRODUCT_GMS_CLIENTID_BASE := android-youxuepai
