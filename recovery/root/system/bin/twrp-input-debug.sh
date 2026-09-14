@@ -71,7 +71,10 @@ capture_usb_state() {
         for udc in /sys/class/udc/*; do
             [ -d "$udc" ] || continue
             echo "-- $udc --"
-            for node in "$udc"/state "$udc"/function "$udc"/soft_connect \
+            # On this MUSB implementation, reading $udc/state can block
+            # indefinitely once the gadget is configured. That used to stop
+            # this whole script before it could refresh input diagnostics.
+            for node in "$udc"/function "$udc"/soft_connect "$udc"/uevent \
                 "$udc"/device/mode "$udc"/device/cmode "$udc"/device/role; do
                 [ -e "$node" ] || continue
                 printf '%s: ' "$node"
@@ -99,6 +102,27 @@ capture_usb_state() {
     } > "$OUT/twrp-usb-state.log" 2>&1
 }
 
+capture_twrp_runtime() {
+    {
+        echo "=== timestamp ==="
+        date
+        echo "=== touch IRQ counters ==="
+        grep -i -E 'himax|touch|tpd' /proc/interrupts 2>/dev/null || true
+        echo "=== input event readers ==="
+        ps -A 2>/dev/null | grep -E '[g]etevent|[r]ecovery|twrp-input-debug' || true
+        echo "=== TWRP recovery log (last 4096 lines) ==="
+        if [ -f /tmp/recovery.log ]; then
+            if command -v tail >/dev/null 2>&1; then
+                tail -n 4096 /tmp/recovery.log 2>&1
+            else
+                cat /tmp/recovery.log 2>&1
+            fi
+        else
+            echo "/tmp/recovery.log is unavailable"
+        fi
+    } > "$1" 2>&1
+}
+
 OUT=
 while [ -z "$OUT" ]; do
     candidate="$(pick_output_dir 2>/dev/null)"
@@ -115,6 +139,7 @@ cp "$TMP/twrp-dmesg-boot.log" "$OUT/" 2>/dev/null
 echo "destination=$OUT" > "$OUT/twrp-diagnostic-destination.txt"
 capture_usb_state
 capture_logcat "$OUT/twrp-logcat-boot.log"
+capture_twrp_runtime "$OUT/twrp-runtime-boot.log"
 
 {
     echo "=== boot properties ==="
@@ -151,6 +176,7 @@ while true; do
     /system/bin/dmesg > "$OUT/twrp-dmesg-latest.log" 2>&1
     capture_usb_state
     capture_logcat "$OUT/twrp-logcat-latest.log"
+    capture_twrp_runtime "$OUT/twrp-runtime-latest.log"
     sync
     sleep 3
 done
