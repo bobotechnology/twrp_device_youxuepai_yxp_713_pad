@@ -40,6 +40,65 @@ pick_output_dir() {
     return 1
 }
 
+capture_logcat() {
+    if [ -x /system/bin/logcat ]; then
+        /system/bin/logcat -b all -d -v threadtime > "$1" 2>&1
+    else
+        echo "logcat is unavailable in this recovery ramdisk" > "$1"
+    fi
+}
+
+capture_usb_state() {
+    {
+        echo "=== timestamp ==="
+        date
+        echo "=== USB and ADB properties ==="
+        getprop | grep -E '^\[(init\.svc\.adbd|init\.svc_debug_pid\.adbd|service\.adb\.root|sys\.usb|persist\.sys\.usb|ro\.adb|ro\.debuggable)'
+        echo "=== FunctionFS and ConfigFS mounts ==="
+        grep -E '[[:space:]](functionfs|configfs)[[:space:]]' /proc/mounts
+        echo "=== android_usb attributes ==="
+        for node in \
+            /sys/class/android_usb/android0/enable \
+            /sys/class/android_usb/android0/functions \
+            /sys/class/android_usb/android0/state \
+            /sys/class/android_usb/android0/idVendor \
+            /sys/class/android_usb/android0/idProduct; do
+            [ -e "$node" ] || continue
+            printf '%s: ' "$node"
+            cat "$node" 2>/dev/null
+        done
+        echo "=== UDC state ==="
+        for udc in /sys/class/udc/*; do
+            [ -d "$udc" ] || continue
+            echo "-- $udc --"
+            for node in "$udc"/state "$udc"/function "$udc"/soft_connect \
+                "$udc"/device/mode "$udc"/device/cmode "$udc"/device/role; do
+                [ -e "$node" ] || continue
+                printf '%s: ' "$node"
+                cat "$node" 2>/dev/null
+            done
+        done
+        echo "=== FunctionFS endpoints ==="
+        ls -la /dev/usb-ffs /dev/usb-ffs/adb
+        echo "=== ConfigFS gadget tree ==="
+        ls -laR /config/usb_gadget/g1 2>/dev/null
+        echo "=== current adbd process ==="
+        pid="$(getprop init.svc_debug_pid.adbd)"
+        echo "init.svc_debug_pid.adbd=$pid"
+        case "$pid" in
+            ''|*[!0-9]*) ;;
+            *)
+                if [ -d "/proc/$pid" ]; then
+                    cat "/proc/$pid/status"
+                    echo "wchan=$(cat "/proc/$pid/wchan" 2>/dev/null)"
+                fi
+                ;;
+        esac
+        echo "=== process table ==="
+        ps -A
+    } > "$OUT/twrp-usb-state.log" 2>&1
+}
+
 OUT=
 while [ -z "$OUT" ]; do
     candidate="$(pick_output_dir 2>/dev/null)"
@@ -54,6 +113,8 @@ done
 
 cp "$TMP/twrp-dmesg-boot.log" "$OUT/" 2>/dev/null
 echo "destination=$OUT" > "$OUT/twrp-diagnostic-destination.txt"
+capture_usb_state
+capture_logcat "$OUT/twrp-logcat-boot.log"
 
 {
     echo "=== boot properties ==="
@@ -88,6 +149,8 @@ echo "himax=$HIMAX_DEV mtk-tpd=$MTK_TPD_DEV" > "$OUT/twrp-input-map.log"
 
 while true; do
     /system/bin/dmesg > "$OUT/twrp-dmesg-latest.log" 2>&1
+    capture_usb_state
+    capture_logcat "$OUT/twrp-logcat-latest.log"
     sync
     sleep 3
 done
