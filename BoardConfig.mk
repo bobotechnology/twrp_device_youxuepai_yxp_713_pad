@@ -105,7 +105,9 @@ PLATFORM_VERSION := 16.1.0
 # TWRP Configuration
 TW_THEME := portrait_hdpi
 TW_EXTRA_LANGUAGES := true
-TW_SCREEN_BLANK_ON_BOOT := true
+# TWRP's boot blanking turns the panel off and makes the Himax driver suspend
+# (including disabling its IRQ) before an unusable touch screen can wake it.
+TW_SCREEN_BLANK_ON_BOOT := false
 TW_ROTATION := 90
 TW_INPUT_BLACKLIST := "mtk-tpd"
 RECOVERY_TOUCHSCREEN_SWAP_XY := true
