@@ -26,8 +26,9 @@ on post-fs
     symlink /dev/block/platform/bootdevice/by-name/preloader_b /dev/block/platform/bootdevice/by-name/preloader_emmc_b
     symlink /dev/block/platform/bootdevice/by-name/preloader_a /dev/block/platform/bootdevice/by-name/preloader_ufs_a
     symlink /dev/block/platform/bootdevice/by-name/preloader_b /dev/block/platform/bootdevice/by-name/preloader_ufs_b
-    mount ext4 /dev/block/by-name/cache /cache noatime nosuid nodev nomblk_io_submit barrier=1
-    mkdir /cache/recovery 0770 root root
+    # The input diagnostics script waits for a user-accessible removable
+    # volume (or already-mounted internal shared storage). Do not write it
+    # to /cache: that partition is inconvenient to retrieve without ADB.
     start twrp_input_debug
 
 service twrp_input_debug /system/bin/sh /system/bin/twrp-input-debug.sh
