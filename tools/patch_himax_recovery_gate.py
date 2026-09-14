@@ -3,8 +3,10 @@
 
 The original P713 MT6779 kernel is a gzip-compressed ARM64 Image followed by
 an FDT payload. This utility preserves that FDT tail exactly and changes only
-the two conditional branches which reject boot modes 1 and 2 in the HXTP
-tpd_driver_init routine.
+three ARM64 instructions: the two boot-mode branches which reject recovery in
+HXTP ``tpd_driver_init``, plus the early boot-animation-completion return in
+``himax_ts_work``. TWRP has no Android boot animation, so that latter vendor
+gate otherwise suppresses every Himax input report indefinitely.
 """
 
 from __future__ import annotations
@@ -21,6 +23,9 @@ EXPECTED_ORIGINAL_SHA256 = "4cf07e13d26ae95c197fa4f280d94aed9a341344d4b441f5eea3
 PATCHES = {
     0x68BB5C: (0x54000080, 0xD503201F),  # b.eq recovery block -> nop
     0x68BB68: (0x54000081, 0x14000004),  # b.ne recovery block -> b normal path
+    # cbz w8, himax_ts_work early return -> nop; recovery never logs
+    # BOOT_Animation:END, but the driver is already initialized at this point.
+    0xABA994: (0x34000B08, 0xD503201F),
 }
 
 
@@ -57,6 +62,24 @@ def main() -> None:
             )
         struct.pack_into("<I", patched, offset, replacement)
 
+    changed_offsets = {
+        index
+        for index, (before, after) in enumerate(zip(image, patched))
+        if before != after
+    }
+    expected_changed_offsets = {
+        offset + byte_index
+        for offset, (expected, replacement) in PATCHES.items()
+        for byte_index, (before, after) in enumerate(
+            zip(struct.pack("<I", expected), struct.pack("<I", replacement))
+        )
+        if before != after
+    }
+    if changed_offsets != expected_changed_offsets:
+        raise SystemExit(
+            "patched Image changed bytes outside the approved instruction footprint"
+        )
+
     output = gzip.compress(bytes(patched), compresslevel=9, mtime=0) + fdt_tail
     round_trip, round_trip_tail = inflate_single_gzip_member(output)
     if round_trip != patched or round_trip_tail != fdt_tail:
@@ -67,6 +90,7 @@ def main() -> None:
     print(f"input SHA-256:  {source_hash}")
     print(f"output SHA-256: {hashlib.sha256(output).hexdigest()}")
     print(f"FDT tail SHA-256: {hashlib.sha256(fdt_tail).hexdigest()}")
+    print(f"modified raw Image bytes: {len(changed_offsets)}")
 
 
 if __name__ == "__main__":
