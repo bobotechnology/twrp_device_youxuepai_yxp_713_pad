@@ -1,0 +1,9 @@
+# Default reviewer for this device tree. Keep vendor-binary and boot-critical
+# changes under explicit maintainer review.
+* @Dylan-rev
+
+/prebuilt/ @Dylan-rev
+/tools/ @Dylan-rev
+/BoardConfig.mk @Dylan-rev
+/recovery.fstab @Dylan-rev
+/recovery/root/ @Dylan-rev

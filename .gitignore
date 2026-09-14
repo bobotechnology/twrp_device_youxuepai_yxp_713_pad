@@ -1,0 +1,14 @@
+# Python validation artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local build, diagnostics, and editor artifacts
+out/
+*.log
+*.orig
+*.rej
+.idea/
+.vscode/
+*.swp
+.DS_Store

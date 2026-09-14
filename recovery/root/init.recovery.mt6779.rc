@@ -1,7 +1,6 @@
-# This kernel has no /sys/class/android_usb/android0 at runtime, so legacy
-# android_usb rules cannot enumerate a gadget. Its ConfigFS implementation is
-# available instead. TWRP later requests mtp,adb, but the common ConfigFS init
-# only implements adb/sideload/fastboot; redirect that unsupported mode to ADB.
+# This kernel exposes ConfigFS rather than /sys/class/android_usb/android0.
+# TWRP may request mtp,adb, but this implementation reliably supports the ADB
+# path only, so redirect that combination to ADB.
 on init
     setprop sys.usb.configfs 1
     setprop sys.usb.ffs.aio_compat 1
@@ -15,7 +14,7 @@ on property:sys.usb.config=mtp,adb
     setprop sys.usb.config adb
 
 on fs && property:ro.debuggable=0
-    # distinguish USB shoulde connect or not, i.e. CDP vs SDP
+    # Select the USB charging/data mode for CDP vs. SDP detection.
     write /sys/class/udc/musb-hdrc/device/cmode 2
     # The ConfigFS sys.usb.config=adb trigger starts adbd and binds musb-hdrc.
 
@@ -31,25 +30,9 @@ on post-fs
     symlink /dev/block/platform/bootdevice/by-name/preloader_b /dev/block/platform/bootdevice/by-name/preloader_emmc_b
     symlink /dev/block/platform/bootdevice/by-name/preloader_a /dev/block/platform/bootdevice/by-name/preloader_ufs_a
     symlink /dev/block/platform/bootdevice/by-name/preloader_b /dev/block/platform/bootdevice/by-name/preloader_ufs_b
-    # The input diagnostics script waits for a user-accessible removable
-    # volume (or already-mounted internal shared storage). Do not write it
-    # to /cache: that partition is inconvenient to retrieve without ADB.
-    start twrp_input_debug
-
-service twrp_input_debug /system/bin/sh /system/bin/twrp-input-debug.sh
-    class core
-    user root
-    group root input log
-    disabled
-    seclabel u:r:su:s0
 
 service console /system/bin/sh
     class core
     console
     disabled
-    #user shell
-    #group shell log
     seclabel u:r:shell:s0
-
-#service console /sbin/busybox sh
-#    console

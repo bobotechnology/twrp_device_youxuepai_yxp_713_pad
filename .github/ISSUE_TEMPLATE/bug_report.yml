@@ -1,0 +1,66 @@
+name: Bug report
+description: Report a reproducible issue with a Recovery build from this repository.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form only for the Youxuepai P713 / yxp_713_pad.
+        Remove serial numbers, personal data, encryption keys, and private paths from logs.
+  - type: input
+    id: build
+    attributes:
+      label: Build identifier
+      description: Commit SHA, workflow run, or reproducible local build details.
+      placeholder: afce804 or Actions run URL
+    validations:
+      required: true
+  - type: dropdown
+    id: install_method
+    attributes:
+      label: Installation method
+      options:
+        - Fastboot
+        - Device-specific service tool
+        - Local test boot
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Start from a clean Recovery boot where possible.
+      placeholder: |
+        1. Boot Recovery
+        2. Open ...
+        3. Tap ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs
+      description: Attach or paste the relevant recovery.log and dmesg lines.
+      render: shell
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I confirmed that this is a P713 / yxp_713_pad build.
+          required: true
+        - label: I removed sensitive data from logs and screenshots.
+          required: true

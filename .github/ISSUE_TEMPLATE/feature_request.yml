@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest a scoped improvement for the P713 Recovery device tree.
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep requests device-specific and explain the hardware or Recovery use case.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: What P713 Recovery limitation does this address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Hardware evidence or references
+      description: Include logs, test results, or a focused implementation sketch when available.

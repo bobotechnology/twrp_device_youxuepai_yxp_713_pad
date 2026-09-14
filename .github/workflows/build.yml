@@ -1,16 +1,93 @@
 name: Build TWRP
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/build.yml
+      - Android.bp
+      - Android.mk
+      - AndroidProducts.mk
+      - BoardConfig.mk
+      - device.mk
+      - extract-files.sh
+      - prebuilt/**
+      - recovery/**
+      - recovery.fstab
+      - setup-makefiles.sh
+      - tools/**
+      - twrp_yxp_713_pad.mk
+      - vendorsetup.sh
+  pull_request:
+    paths:
+      - .github/workflows/build.yml
+      - Android.bp
+      - Android.mk
+      - AndroidProducts.mk
+      - BoardConfig.mk
+      - device.mk
+      - extract-files.sh
+      - prebuilt/**
+      - recovery/**
+      - recovery.fstab
+      - setup-makefiles.sh
+      - tools/**
+      - twrp_yxp_713_pad.mk
+      - vendorsetup.sh
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: twrp-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DEVICE: yxp_713_pad
+  BUILD_VARIANT: eng
+  MANIFEST_BRANCH: twrp-12.1
+  SOURCE_DIR: twrp
 
 jobs:
   build:
+    name: Build Recovery
     runs-on: ubuntu-22.04
+    timeout-minutes: 120
+
     steps:
       - name: Checkout device tree
         uses: actions/checkout@v4
         with:
           path: device-tree
+          fetch-depth: 1
+
+      - name: Validate device tree
+        working-directory: device-tree
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          required = (
+              "AndroidProducts.mk",
+              "BoardConfig.mk",
+              "device.mk",
+              "recovery.fstab",
+              "twrp_yxp_713_pad.mk",
+              "prebuilt/kernel",
+              "prebuilt/dtb.img",
+              "prebuilt/dtbo.img",
+              "recovery/root/init.recovery.mt6779.rc",
+              "tools/patch_himax_recovery_gate.py",
+          )
+          missing = [path for path in required if not Path(path).is_file()]
+          empty = [path for path in required if Path(path).is_file() and not Path(path).stat().st_size]
+          if missing or empty:
+              raise SystemExit(f"missing={missing}; empty={empty}")
+          if Path("prebuilt/kernel").read_bytes()[:2] != b"\x1f\x8b":
+              raise SystemExit("prebuilt/kernel is not the expected gzip-compressed Image")
+          PY
+          python3 -c "from pathlib import Path; compile(Path('tools/patch_himax_recovery_gate.py').read_text(), 'tools/patch_himax_recovery_gate.py', 'exec')"
 
       - name: Free disk space
         run: |
@@ -42,34 +119,50 @@ jobs:
 
       - name: Sync TWRP source
         run: |
-          mkdir -p twrp
-          cd twrp
+          mkdir -p "$SOURCE_DIR"
+          cd "$SOURCE_DIR"
           git config --global user.email "twrp@local"
           git config --global user.name "TWRP Build"
           repo init --depth=1 \
             -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git \
-            -b twrp-12.1
-          repo sync -c --no-tags -j$(nproc)
+            -b "$MANIFEST_BRANCH"
+          repo sync -c --no-tags -j"$(nproc)"
 
       - name: Install device tree
         run: |
-          mkdir -p twrp/device/youxuepai
-          cp -r device-tree twrp/device/youxuepai/yxp_713_pad
-          rm -rf twrp/device/youxuepai/yxp_713_pad/.git
-          rm -rf twrp/device/youxuepai/yxp_713_pad/.github
+          target="$SOURCE_DIR/device/youxuepai/$DEVICE"
+          mkdir -p "$target"
+          rsync -a --delete \
+            --exclude=.git \
+            --exclude=.github \
+            device-tree/ "$target/"
 
       - name: Build recoveryimage
         working-directory: twrp
         run: |
           export ALLOW_MISSING_DEPENDENCIES=true
           export LC_ALL=C
-          . build/envsetup.sh
-          lunch twrp_yxp_713_pad-eng
-          mka recoveryimage -j$(nproc)
+          source build/envsetup.sh
+          lunch "twrp_${DEVICE}-${BUILD_VARIANT}"
+          mka recoveryimage -j"$(nproc)"
 
-      - name: Upload recovery.img
+      - name: Verify recovery artifact
+        run: |
+          image="$SOURCE_DIR/out/target/product/$DEVICE/recovery.img"
+          test -s "$image"
+          size="$(stat -c%s "$image")"
+          test "$size" -le 33554432
+          sha256sum "$image" > "$image.sha256"
+          file "$image"
+          cat "$image.sha256"
+
+      - name: Upload recovery image
         uses: actions/upload-artifact@v4
         with:
-          name: twrp-recovery-yxp_713_pad
-          path: twrp/out/target/product/yxp_713_pad/recovery.img
+          name: twrp-recovery-${{ env.DEVICE }}-${{ github.run_number }}
+          path: |
+            twrp/out/target/product/yxp_713_pad/recovery.img
+            twrp/out/target/product/yxp_713_pad/recovery.img.sha256
           if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
