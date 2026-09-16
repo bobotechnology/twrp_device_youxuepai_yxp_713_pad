@@ -8,6 +8,28 @@
 3. Reflash the known-good stock Recovery image if the device cannot re-enter
    Recovery safely.
 
+## Stock Recovery returns after booting Android
+
+This firmware includes a stock `install-recovery.sh` service. It checks the
+Recovery partition during normal Android startup and can restore the stock
+Recovery image when TWRP is present. This is expected on the stock system.
+
+For a system installation workflow, do not boot the stock Android system
+between flashing TWRP and installing the replacement system. If Android was
+already booted, flash TWRP again before entering Recovery.
+
+## Vendor or data mount messages
+
+The device uses read-only logical `system`, `vendor`, and `product`
+partitions. Current builds mount them with `ro,noload` to avoid journal replay
+and the vendor-kernel mount rejection seen with a read-write attempt.
+
+`/data` also contains emulated internal storage at `/data/media`. The device
+tree declares this explicitly and disables MTP because this kernel's ConfigFS
+gadget path is validated for ADB only. A stale log from an older build may
+still show `MTP Enabled`; verify the TWRP version and collect a fresh
+`/tmp/recovery.log`.
+
 ## Touch does not respond
 
 The real touch source is the Himax input device. The mtk-tpd compatibility

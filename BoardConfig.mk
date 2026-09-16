@@ -73,10 +73,12 @@ BOARD_SYSTEMIMAGE_PARTITION_TYPE := ext4
 BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
 TARGET_COPY_OUT_VENDOR := vendor
-BOARD_SUPER_PARTITION_SIZE := 8589934592 # 0x200000000 from P713mt6779_20221129_2216/MT6779_Android_scatter.txt:super
+# The super partition is 8 GiB in the factory scatter; the group size comes
+# from the factory super metadata rather than the full partition envelope.
+BOARD_SUPER_PARTITION_SIZE := 8589934592
 BOARD_SUPER_PARTITION_GROUPS := youxuepai_dynamic_partitions
 BOARD_YOUXUEPAI_DYNAMIC_PARTITIONS_PARTITION_LIST := system vendor product
-BOARD_YOUXUEPAI_DYNAMIC_PARTITIONS_SIZE := 8585740288 # BOARD_SUPER_PARTITION_SIZE - 4M overhead
+BOARD_YOUXUEPAI_DYNAMIC_PARTITIONS_SIZE := 8342470656
 
 # Platform
 TARGET_BOARD_PLATFORM := mt6779
@@ -105,6 +107,11 @@ PLATFORM_VERSION := 16.1.0
 # TWRP Configuration
 TW_THEME := portrait_hdpi
 TW_EXTRA_LANGUAGES := true
+TW_DEFAULT_LANGUAGE := zh_CN
+# This vendor kernel suspends the Himax controller when Recovery blanks the
+# panel, so keep the display and touch path awake during Recovery sessions.
+TW_NO_SCREEN_TIMEOUT := true
+TW_NO_SCREEN_BLANK := true
 # TWRP's boot blanking turns the panel off and makes the Himax driver suspend
 # (including disabling its IRQ) before an unusable touch screen can wake it.
 TW_SCREEN_BLANK_ON_BOOT := false
@@ -112,4 +119,8 @@ TW_ROTATION := 90
 TW_INPUT_BLACKLIST := "mtk-tpd"
 RECOVERY_TOUCHSCREEN_SWAP_XY := true
 RECOVERY_TOUCHSCREEN_FLIP_Y := true
+# The vendor USB gadget reliably supports ADB, but not TWRP's MTP service.
+TW_EXCLUDE_MTP := true
+# The userdata partition contains the emulated internal storage at /data/media.
+RECOVERY_SDCARD_ON_DATA := true
 TW_USE_TOOLBOX := true

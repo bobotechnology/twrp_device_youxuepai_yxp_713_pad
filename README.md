@@ -39,9 +39,22 @@ Hardware verification below was completed on **September 14, 2026** using this d
 | Display | Verified | Recovery UI renders correctly |
 | Himax touchscreen | Verified | Input reaches the TWRP input stack |
 | USB ADB | Verified | Recovery ConfigFS path |
-| MTP | Not validated | ADB is the supported USB transport for now |
+| MTP | Disabled | This kernel's ConfigFS path is validated for ADB only |
 | Encryption / decryption | Not validated | Reports with logs are welcome |
 | Backup / restore | Not validated | Reports with logs are welcome |
+
+### Stock Recovery replacement
+
+The stock system image in the matching `P713mt6779_20221129_2216` firmware
+contains `/system/bin/install-recovery.sh`. On a normal Android boot it
+checks the complete 32 MiB Recovery partition and restores the stock Recovery
+when its SHA-1 does not match the vendor image. This is expected vendor
+behavior, not a TWRP build failure.
+
+If the goal is to install a replacement system, flash or boot TWRP and
+continue with the system installation without booting the stock Android
+system in between. If Android is booted first, flash TWRP again before
+returning to Recovery. Keep the matching stock Recovery image for rollback.
 
 ## What makes this tree different
 
@@ -53,6 +66,10 @@ Hardware verification below was completed on **September 14, 2026** using this d
   vendor Himax driver in recovery and removes its Android boot-animation gate,
   which otherwise drops every touch report before it reaches input.
 - Configures the device's ConfigFS USB gadget path for dependable Recovery ADB.
+- Mounts the logical system, vendor, and product partitions read-only without
+  journal replay, matching the stock firmware layout.
+- Treats `/data/media` as the internal storage path and excludes the
+  unsupported MTP service; ADB remains the supported Recovery transport.
 
 ## Downloads
 
